@@ -9,6 +9,7 @@ const DonorSchema = new mongoose.Schema({
   contact: {
     type: String,
     required: [true, 'Contact number is required'],
+    unique: true, // Ensures each contact number is unique
     match: [/^\d{10}$/, 'Please enter a valid 10-digit contact number']
   },
   bloodGroup: {
@@ -29,24 +30,42 @@ const DonorSchema = new mongoose.Schema({
     trim: true,
     default: 'Not specified'
   },
-  unnecessaryQuestions: {
-    type: String,
-    trim: true,
-    default: 'Not specified'
-  },
   lastDonationDate: {
     type: Date,
-    required: [true, 'Last Donation Date is required'],
+    // Removed 'required: true' from here.
+    // Logic for required status handled in controller based on isFirstTimeDonor.
     validate: {
       validator: function(v) {
-        return v <= new Date();
+        // Only validate if a date is provided (i.e., not null/undefined)
+        return v === null || v === undefined || v <= new Date();
       },
       message: props => `${props.value} is a future date. Last donation date cannot be in the future.`
     }
   },
   validUntil: {
     type: Date,
-    required: true // KEEP THIS AS REQUIRED
+    required: true
+  },
+  isFirstTimeDonor: { // NEW: Indicates if it's their first time donating
+    type: Boolean,
+    default: false
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  currentAvailabilityStatus: {
+    type: String,
+    enum: ['available', 'contacted', 'donated_elsewhere', 'temporarily_unavailable', 'permanently_unavailable'],
+    default: 'available'
+  },
+  lastContactOutcome: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  lastContactDate: {
+    type: Date
   },
   // --- Precautions Before Blood Collection (All required boolean) ---
   hasCompletedForm: {
@@ -111,14 +130,5 @@ const DonorSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// REMOVE THE PRE-SAVE HOOK FOR VALIDUNTIL FROM HERE
-// DonorSchema.pre('save', function (next) {
-//   if (this.lastDonationDate) {
-//     const validDate = new Date(this.lastDonationDate);
-//     validDate.setDate(validDate.getDate() + 60);
-//     this.validUntil = validDate;
-//   }
-//   next();
-// });
 
 module.exports = mongoose.model('Donor', DonorSchema);

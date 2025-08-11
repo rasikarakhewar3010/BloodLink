@@ -56,6 +56,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/doctor', require('./routes/doctor'));
+app.use('/admin', require('./routes/admin')); // NEW: Admin routes
 
 // 404 Not Found Page
 app.use((req, res, next) => {

@@ -1,0 +1,27 @@
+<%- include('../partials/_header') %>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3><i class="fas fa-user-shield"></i> Admin Login</h3>
+                </div>
+                <div class="card-body">
+                    <%- include('../partials/_messages') %>
+                    <form action="/admin/login" method="POST">
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Admin Password</label>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Enter Admin Password" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">Login as Admin</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/_footer') %>

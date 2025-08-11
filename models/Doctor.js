@@ -13,6 +13,11 @@ const DoctorSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long']
+  },
+  city: { // NEW: To assign doctors to a specific city for filtering
+    type: String,
+    required: [true, 'City for the doctor is required'],
+    trim: true
   }
 }, { timestamps: true });
 

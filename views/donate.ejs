@@ -3,6 +3,10 @@
 <div class="container my-5">
     <h1 class="mb-4">Register as a Blood Donor</h1>
 
+    <div class="alert alert-info" role="alert">
+        <strong>Important:</strong> Your online registration is the first step. Final eligibility will be determined by a medical professional after a physical check-up and interview.
+    </div>
+
     <%- include('partials/_messages') %>
 
     <form action="/donate" method="POST">
@@ -12,8 +16,9 @@
                 <input type="text" class="form-control" id="name" name="name" value="<%= typeof name != 'undefined' ? name : '' %>" required>
             </div>
             <div class="col-md-6 mb-3">
-                <label for="contact" class="form-label">Contact Number (10 digits) <span class="text-danger">*</span></label>
+                <label for="contact" class="form-label">Contact Number (10 digits, unique) <span class="text-danger">*</span></label>
                 <input type="tel" class="form-control" id="contact" name="contact" pattern="[0-9]{10}" value="<%= typeof contact != 'undefined' ? contact : '' %>" required>
+                <small class="form-text text-muted">This number will be used to contact you for verification.</small>
             </div>
         </div>
 
@@ -28,82 +33,113 @@
                 </select>
             </div>
             <div class="col-md-6 mb-3">
-                <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+                <label for="city" class="form-label">City (e.g., Mumbai) <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="city" name="city" value="<%= typeof city != 'undefined' ? city : '' %>" required>
             </div>
         </div>
 
         <div class="mb-3">
-            <label for="lastDonationDate" class="form-label">Last Donation Date <span class="text-danger">*</span></label>
-            <input type="date" class="form-control" id="lastDonationDate" name="lastDonationDate" value="<%= typeof lastDonationDate != 'undefined' ? lastDonationDate.split('T')[0] : '' %>" max="<%= new Date().toISOString().split('T')[0] %>" required>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="isFirstTimeDonor" name="isFirstTimeDonor" <%= (typeof isFirstTimeDonor != 'undefined' && isFirstTimeDonor) ? 'checked' : '' %>>
+                <label class="form-check-label" for="isFirstTimeDonor">
+                    I have never donated blood before (First-Time Donor).
+                </label>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="lastDonationDate" class="form-label">Last Donation Date</label>
+            <input type="date" class="form-control" id="lastDonationDate" name="lastDonationDate"
+                   value="<%= typeof lastDonationDate != 'undefined' ? lastDonationDate.split('T')[0] : '' %>"
+                   max="<%= new Date().toISOString().split('T')[0] %>"
+                   <%= (typeof isFirstTimeDonor != 'undefined' && isFirstTimeDonor) ? 'disabled' : '' %> >
             <small class="form-text text-muted">Enter the date of your last blood donation. Cannot be a future date.</small>
         </div>
 
         <div class="mb-3">
-            <label for="habits" class="form-label">Habits (e.g., diet, exercise)</label>
-            <textarea class="form-control" id="habits" name="habits" rows="3"><%= typeof habits != 'undefined' ? habits : '' %></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label for="unnecessaryQuestions" class="form-label">Any other relevant medical information?</label>
-            <textarea class="form-control" id="unnecessaryQuestions" name="unnecessaryQuestions" rows="3"><%= typeof unnecessaryQuestions != 'undefined' ? unnecessaryQuestions : '' %></textarea>
+            <label for="habits" class="form-label">General Health / Lifestyle Notes (Optional)</label>
+            <textarea class="form-control" id="habits" name="habits" rows="3" placeholder="e.g., Daily exercise, vegetarian diet, no smoking etc."><%= typeof habits != 'undefined' ? habits : '' %></textarea>
         </div>
 
         <hr class="my-4">
-        <h3 class="mb-3">Precautions Before Blood Collection <span class="text-danger">*</span></h3>
-        <p class="text-muted">Please read and confirm each statement. All confirmations are required to proceed.</p>
+        <h3 class="mb-3">Pre-Screening Declarations <span class="text-danger">*</span></h3>
+        <p class="text-muted">Please read and confirm each statement truthfully. All confirmations are required to proceed. Your answers will be verified by medical staff.</p>
 
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="hasCompletedForm" name="hasCompletedForm" <%= (typeof hasCompletedForm != 'undefined' && hasCompletedForm) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="hasCompletedForm">1. I have completed the donor registration and consent form.</label>
+            <label class="form-check-label" for="hasCompletedForm">1. I confirm I understand that this is a pre-registration and consent for blood donation.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="isAgeValid" name="isAgeValid" <%= (typeof isAgeValid != 'undefined' && isAgeValid) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="isAgeValid">2. I am between 18 and 65 years of age.</label>
+            <label class="form-check-label" for="isAgeValid">2. I confirm I am between 18 and 65 years of age.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="isWeightValid" name="isWeightValid" <%= (typeof isWeightValid != 'undefined' && isWeightValid) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="isWeightValid">3. I weigh at least 50 kg.</label>
+            <label class="form-check-label" for="isWeightValid">3. I confirm I weigh at least 50 kg.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="isHemoglobinValid" name="isHemoglobinValid" <%= (typeof isHemoglobinValid != 'undefined' && isHemoglobinValid) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="isHemoglobinValid">4. My hemoglobin level is above the minimum requirement (usually 12.5 g/dL).</label>
+            <label class="form-check-label" for="isHemoglobinValid">4. I believe my hemoglobin level is above the minimum requirement (will be tested).</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="hasPassedMedicalCheck" name="hasPassedMedicalCheck" <%= (typeof hasPassedMedicalCheck != 'undefined' && hasPassedMedicalCheck) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="hasPassedMedicalCheck">5. I have passed the basic medical check-up (blood pressure, pulse, temperature).</label>
+            <label class="form-check-label" for="hasPassedMedicalCheck">5. I confirm I generally feel healthy and have no obvious symptoms of illness.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="avoidedAlcoholSmoking" name="avoidedAlcoholSmoking" <%= (typeof avoidedAlcoholSmoking != 'undefined' && avoidedAlcoholSmoking) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="avoidedAlcoholSmoking">6. I have avoided alcohol and smoking in the last 24 hours.</label>
+            <label class="form-check-label" for="avoidedAlcoholSmoking">6. I confirm I have avoided alcohol and smoking in the last 24 hours.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="hadProperMeal" name="hadProperMeal" <%= (typeof hadProperMeal != 'undefined' && hadProperMeal) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="hadProperMeal">7. I have had a proper meal within 2–3 hours before donation.</label>
+            <label class="form-check-label" for="hadProperMeal">7. I confirm I have had a proper meal within 2–3 hours before donation.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="isFreeFromIllness" name="isFreeFromIllness" <%= (typeof isFreeFromIllness != 'undefined' && isFreeFromIllness) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="isFreeFromIllness">8. I am free from any current illness, fever, or infection.</label>
+            <label class="form-check-label" for="isFreeFromIllness">8. I confirm I am free from any current illness, fever, or infection.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="disclosedHistory" name="disclosedHistory" <%= (typeof disclosedHistory != 'undefined' && disclosedHistory) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="disclosedHistory">9. I have disclosed any history of recent surgery, tattoos, or piercings.</label>
+            <label class="form-check-label" for="disclosedHistory">9. I confirm I have disclosed any history of recent surgery, tattoos, or piercings during the medical interview (not just this form).</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="avoidedMedications" name="avoidedMedications" <%= (typeof avoidedMedications != 'undefined' && avoidedMedications) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="avoidedMedications">10. I have avoided taking antibiotics or other medications recently.</label>
+            <label class="form-check-label" for="avoidedMedications">10. I confirm I have avoided taking antibiotics or other medications recently that may affect donation eligibility.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="isFreeFromChronicDiseases" name="isFreeFromChronicDiseases" <%= (typeof isFreeFromChronicDiseases != 'undefined' && isFreeFromChronicDiseases) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="isFreeFromChronicDiseases">11. I am free from chronic diseases like diabetes, hepatitis, or HIV.</label>
+            <label class="form-check-label" for="isFreeFromChronicDiseases">11. I confirm I am free from chronic diseases like diabetes, hepatitis, or HIV that would prevent donation.</label>
         </div>
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="notDonatedRecently" name="notDonatedRecently" <%= (typeof notDonatedRecently != 'undefined' && notDonatedRecently) ? 'checked' : '' %> required>
-            <label class="form-check-label" for="notDonatedRecently">12. I have not donated blood in the last 3 months (for males) or 4 months (for females).</label>
+            <label class="form-check-label" for="notDonatedRecently">12. I confirm I have not donated blood in the last 3 months (for males) or 4 months (for females).</label>
         </div>
 
         <button type="submit" class="btn btn-success btn-lg mt-4">Register Donation</button>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isFirstTimeDonorCheckbox = document.getElementById('isFirstTimeDonor');
+        const lastDonationDateField = document.getElementById('lastDonationDate');
+
+        function toggleLastDonationDate() {
+            if (isFirstTimeDonorCheckbox.checked) {
+                lastDonationDateField.value = ''; // Clear date if becoming first time
+                lastDonationDateField.disabled = true;
+                lastDonationDateField.removeAttribute('required'); // Remove required attribute
+            } else {
+                lastDonationDateField.disabled = false;
+                lastDonationDateField.setAttribute('required', 'required'); // Add required attribute back
+            }
+        }
+
+        // Initial state on page load
+        toggleLastDonationDate();
+
+        // Listen for changes on the checkbox
+        isFirstTimeDonorCheckbox.addEventListener('change', toggleLastDonationDate);
+    });
+</script>
 
 <%- include('partials/_footer') %>

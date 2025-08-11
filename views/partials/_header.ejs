@@ -23,14 +23,26 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/">Home</a>
                     </li>
+                    <% if (user) { %>
+                        <!-- If a doctor is logged in, show Dashboard link -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/doctor/dashboard">Dashboard</a>
+                        </li>
+                    <% } else { %>
+                        <!-- If no one is logged in (or it's a public user), show Donate Blood link -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/donate">Donate Blood</a>
+                        </li>
+                    <% } %>
+                    <!-- Admin link remains visible always as it's a separate login -->
                     <li class="nav-item">
-                        <a class="nav-link" href="/donate">Donate Blood</a>
+                        <a class="nav-link" href="/admin/login">Admin</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
                     <% if (user) { %>
                         <li class="nav-item">
-                            <span class="navbar-text me-3">Welcome, Dr. <%= user.username %></span>
+                            <span class="navbar-text me-3">Welcome, Dr. <%= user.username %> (<%= user.city %>)</span>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link btn btn-outline-light" href="/doctor/logout">Logout</a>

@@ -8,13 +8,19 @@
 
     <%- include('../partials/_messages') %>
 
+    <div class="alert alert-info" role="alert">
+        <strong>Note:</strong> You are seeing donors primarily from your assigned city: <strong><%= user.city %></strong>.
+        Use the filters below to refine the list further within your city.
+    </div>
+
+
     <div class="card mb-4">
         <div class="card-header">
             <h4>Filter Donors</h4>
         </div>
         <div class="card-body">
             <form action="/doctor/dashboard" method="GET" class="row g-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="bloodGroupFilter" class="form-label">Blood Group</label>
                     <select class="form-select" id="bloodGroupFilter" name="bloodGroup">
                         <option value="">All</option>
@@ -23,12 +29,31 @@
                         <% }); %>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label for="cityFilter" class="form-label">City</label>
-                    <input type="text" class="form-control" id="cityFilter" name="city" value="<%= currentFilters.city || '' %>" placeholder="Enter City">
+                <div class="col-md-3">
+                    <label for="cityFilter" class="form-label">City (Refine within <%= user.city %>)</label>
+                    <input type="text" class="form-control" id="cityFilter" name="city" value="<%= currentFilters.city || '' %>" placeholder="Enter specific locality/area">
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                <div class="col-md-3">
+                    <label for="verificationStatus" class="form-label">Verification Status</label>
+                    <select class="form-select" id="verificationStatus" name="verificationStatus">
+                        <option value="">All</option>
+                        <option value="verified" <%= (currentFilters.verificationStatus && currentFilters.verificationStatus == 'verified') ? 'selected' : '' %>>Verified Donors</option>
+                        <option value="unverified" <%= (currentFilters.verificationStatus && currentFilters.verificationStatus == 'unverified') ? 'selected' : '' %>>Unverified Donors</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="availabilityStatus" class="form-label">Availability Status</label>
+                    <select class="form-select" id="availabilityStatus" name="availabilityStatus">
+                        <option value="available" <%= (!currentFilters.availabilityStatus || currentFilters.availabilityStatus == 'available') ? 'selected' : '' %>>Available</option>
+                        <option value="all" <%= (currentFilters.availabilityStatus == 'all') ? 'selected' : '' %>>All (inc. Contacted/Unavailable)</option>
+                        <option value="contacted" <%= (currentFilters.availabilityStatus == 'contacted') ? 'selected' : '' %>>Contacted</option>
+                        <option value="donated_elsewhere" <%= (currentFilters.availabilityStatus == 'donated_elsewhere') ? 'selected' : '' %>>Donated Elsewhere</option>
+                        <option value="temporarily_unavailable" <%= (currentFilters.availabilityStatus == 'temporarily_unavailable') ? 'selected' : '' %>>Temporarily Unavailable</option>
+                        <option value="permanently_unavailable" <%= (currentFilters.availabilityStatus == 'permanently_unavailable') ? 'selected' : '' %>>Permanently Unavailable</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary w-100 mt-2">Apply Filters</button>
                 </div>
             </form>
         </div>
@@ -36,8 +61,8 @@
 
     <div class="card">
         <div class="card-header">
-            <h4>Available Donors (<%= donors.length %>)</h4>
-            <small class="text-muted">Showing donors whose validity period has not expired.</small>
+            <h4>Donor List (<%= donors.length %>)</h4>
+            <small class="text-muted">Filtered by your assigned city and selected criteria.</small>
         </div>
         <div class="card-body">
             <% if (donors.length > 0) { %>
@@ -51,7 +76,12 @@
                                 <th>City</th>
                                 <th>Last Donation</th>
                                 <th>Valid Until</th>
-                                <th>Registered On</th>
+                                <th>First Time?</th> <!-- NEW COLUMN -->
+                                <th>Verified</th>
+                                <th>Availability Status</th>
+                                <th>Last Outcome</th>
+                                <th>Last Contact Date</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,16 +91,80 @@
                                     <td><%= donor.contact %></td>
                                     <td><span class="badge bg-danger"><%= donor.bloodGroup %></span></td>
                                     <td><%= donor.city %></td>
-                                    <td><%= donor.lastDonationDate.toLocaleDateString() %></td>
+                                    <td><%= donor.lastDonationDate ? donor.lastDonationDate.toLocaleDateString() : 'N/A' %></td>
                                     <td><%= donor.validUntil.toLocaleDateString() %></td>
-                                    <td><%= donor.createdAt.toLocaleDateString() %></td>
+                                    <td>
+                                        <% if (donor.isFirstTimeDonor) { %>
+                                            <span class="badge bg-primary">Yes</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">No</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (donor.isVerified) { %>
+                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Yes</span>
+                                        <% } else { %>
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> No</span>
+                                        <% } %>
+                                    </td>
+                                    <td><span class="badge bg-<%= donor.currentAvailabilityStatus === 'available' ? 'success' : (donor.currentAvailabilityStatus === 'contacted' ? 'info' : 'secondary') %>"><%= donor.currentAvailabilityStatus %></span></td>
+                                    <td><%= donor.lastContactOutcome || 'N/A' %></td>
+                                    <td><%= donor.lastContactDate ? donor.lastContactDate.toLocaleDateString() : 'N/A' %></td>
+                                    <td class="d-flex flex-column flex-md-row gap-1">
+                                        <!-- Toggle Verification Button -->
+                                        <form action="/doctor/toggle-donor-verification/<%= donor._id %>" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm <%= donor.isVerified ? 'btn-outline-danger' : 'btn-outline-success' %>"
+                                                    name="isVerified" value="<%= !donor.isVerified %>">
+                                                <%= donor.isVerified ? 'Unverify' : 'Verify' %>
+                                            </button>
+                                        </form>
+
+                                        <!-- Status Update Button -->
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#updateStatusModal<%= donor._id %>">
+                                            Update Status
+                                        </button>
+
+                                        <!-- Status Update Modal (remains unchanged) -->
+                                        <div class="modal fade" id="updateStatusModal<%= donor._id %>" tabindex="-1" aria-labelledby="updateStatusModalLabel<%= donor._id %>" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form action="/doctor/update-donor-status/<%= donor._id %>" method="POST">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="updateStatusModalLabel<%= donor._id %>">Update Status for <%= donor.name %></h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label for="status<%= donor._id %>" class="form-label">Availability Status</label>
+                                                                <select class="form-select" id="status<%= donor._id %>" name="status" required>
+                                                                    <option value="available" <%= donor.currentAvailabilityStatus === 'available' ? 'selected' : '' %>>Available</option>
+                                                                    <option value="contacted" <%= donor.currentAvailabilityStatus === 'contacted' ? 'selected' : '' %>>Contacted (Awaiting Response)</option>
+                                                                    <option value="donated_elsewhere" <%= donor.currentAvailabilityStatus === 'donated_elsewhere' ? 'selected' : '' %>>Donated Elsewhere</option>
+                                                                    <option value="temporarily_unavailable" <%= donor.currentAvailabilityStatus === 'temporarily_unavailable' ? 'selected' : '' %>>Temporarily Unavailable</option>
+                                                                    <option value="permanently_unavailable" <%= donor.currentAvailabilityStatus === 'permanently_unavailable' ? 'selected' : '' %>>Permanently Unavailable</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="outcome<%= donor._id %>" class="form-label">Contact Outcome/Notes</label>
+                                                                <textarea class="form-control" id="outcome<%= donor._id %>" name="outcome" rows="3" placeholder="e.g., 'Called, left voicemail', 'Donor unavailable until next month'"><%= donor.lastContactOutcome %></textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                             <% }) %>
                         </tbody>
                     </table>
                 </div>
             <% } else { %>
-                <p class="text-center">No available donors found matching your criteria.</p>
+                <p class="text-center">No donors found matching your criteria in your assigned city.</p>
             <% } %>
         </div>
     </div>

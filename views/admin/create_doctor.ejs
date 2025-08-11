@@ -1,0 +1,37 @@
+<%- include('../partials/_header') %>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create Doctor Account</h1>
+        <a href="/admin/logout" class="btn btn-warning"><i class="fas fa-sign-out-alt"></i> Admin Logout</a>
+    </div>
+
+    <%- include('../partials/_messages') %>
+
+    <div class="card">
+        <div class="card-body">
+            <form action="/admin/create-doctor" method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" value="<%= typeof username != 'undefined' ? username : '' %>" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password2" class="form-label">Confirm Password</label>
+                    <input type="password" id="password2" name="password2" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="city" class="form-label">Assigned City</label>
+                    <input type="text" id="city" name="city" class="form-control" value="<%= typeof city != 'undefined' ? city : '' %>" placeholder="e.g., Mumbai" required>
+                    <small class="form-text text-muted">Doctors will only see donors from this city.</small>
+                </div>
+                <button type="submit" class="btn btn-success">Create Doctor</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/_footer') %>

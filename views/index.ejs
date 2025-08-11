@@ -1,12 +1,504 @@
 <%- include('partials/_header') %>
 
-<div class="container text-center my-5">
-    <h1>Welcome to the Blood & Organ Donor Management System</h1>
-    <p class="lead">Connecting donors with those in urgent need.</p>
-    <div class="mt-4">
-        <a href="/donate" class="btn btn-primary btn-lg me-3">Donate Blood</a>
-        <a href="/doctor/login" class="btn btn-outline-secondary btn-lg">Doctor Login</a>
+<style>
+    :root {
+        --primary-red: #d32f2f;
+        --light-red: #ffebee;
+        --dark-red: #9a0007;
+        --primary-blue: #1565c0;
+        --light-blue: #e3f2fd;
+        --dark-blue: #0d47a1;
+    }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, var(--light-blue), white);
+        padding: 80px 20px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='20' viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 L0 10 Q25 0 50 10 Q75 20 100 10 L100 20 Z' fill='white'/%3E%3C/svg%3E") center bottom repeat-x;
+        background-size: 100px 100px;
+    }
+
+    .hero-content {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    .app-logo {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 20px;
+    }
+
+    h1 {
+        font-weight: 800;
+        color: var(--dark-blue);
+        margin-bottom: 20px;
+        font-size: 2.8rem;
+    }
+    
+    h1 span {
+        color: var(--primary-red);
+    }
+
+    .hero-lead {
+        font-size: 1.3rem;
+        color: #555;
+        margin-bottom: 40px;
+        line-height: 1.6;
+    }
+
+    .btn-donate {
+        background-color: var(--primary-red);
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.2);
+    }
+    
+    .btn-donate:hover {
+        background-color: var(--dark-red);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(211, 47, 47, 0.3);
+    }
+
+    .btn-doctor {
+        border: 2px solid var(--primary-blue);
+        color: var(--primary-blue);
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn-doctor:hover {
+        background-color: var(--primary-blue);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.2);
+    }
+
+    /* Steps Section */
+    .steps-section {
+        padding: 80px 0;
+        background-color: white;
+    }
+    
+    .section-title {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    
+    .section-title h2 {
+        font-weight: 800;
+        color: var(--dark-blue);
+        margin-bottom: 15px;
+    }
+    
+    .section-title p {
+        color: #666;
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .step-card {
+        padding: 30px;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        height: 100%;
+        border-top: 4px solid var(--primary-red);
+        transition: transform 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .step-card:hover {
+        transform: translateY(-10px);
+    }
+    
+    .step-number {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 5rem;
+        font-weight: 800;
+        color: rgba(211, 47, 47, 0.1);
+        line-height: 1;
+    }
+    
+    .step-icon {
+        font-size: 2.5rem;
+        color: var(--primary-red);
+        margin-bottom: 20px;
+    }
+    
+    .step-title {
+        font-weight: 700;
+        color: var(--dark-blue);
+        margin-bottom: 15px;
+    }
+
+    /* User Types Section */
+    .user-types {
+        padding: 80px 0;
+        background-color: var(--light-blue);
+    }
+    
+    .user-card {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+        background: white;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-10px);
+    }
+    
+    .user-header {
+        padding: 25px;
+        color: white;
+        text-align: center;
+    }
+    
+    .donor-header {
+        background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+    }
+    
+    .doctor-header {
+        background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+    }
+    
+    .user-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    
+    .user-body {
+        padding: 25px;
+    }
+    
+    .user-step {
+        display: flex;
+        margin-bottom: 15px;
+        align-items: flex-start;
+    }
+    
+    .user-step-number {
+        background-color: var(--primary-red);
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .doctor-step .user-step-number {
+        background-color: var(--primary-blue);
+    }
+    
+    /* Stats Section */
+    .stats-section {
+        padding: 60px 0;
+        background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+        color: white;
+        text-align: center;
+    }
+    
+    .stat-item {
+        padding: 20px;
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+    
+    .stat-label {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        padding: 80px 0;
+        background-color: white;
+        text-align: center;
+    }
+    
+    .cta-card {
+        background: linear-gradient(135deg, var(--light-blue), white);
+        border-radius: 15px;
+        padding: 50px;
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        border: 1px solid rgba(21, 101, 192, 0.1);
+    }
+    
+    .cta-title {
+        font-weight: 800;
+        color: var(--dark-blue);
+        margin-bottom: 20px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 2.2rem;
+        }
+        
+        .hero-lead {
+            font-size: 1.1rem;
+        }
+        
+        .btn-donate, .btn-doctor {
+            padding: 12px 24px;
+            font-size: 1rem;
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .step-card, .user-card {
+            margin-bottom: 30px;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <img src="/images/blood-drop-logo.png" alt="Blood Link" class="app-logo">
+        <h1>Save Lives With <span>Blood Link</span></h1>
+        <p class="hero-lead">
+            Join our life-saving community today. Your single donation can save up to 3 lives. 
+            Register as a donor or healthcare professional to make a difference.
+        </p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="/donate" class="btn btn-donate">
+                <i class="bi bi-droplet-fill me-2"></i> Become a Donor
+            </a>
+            <a href="/doctor/login" class="btn btn-doctor">
+                <i class="bi bi-person-badge-fill me-2"></i> Doctor Login
+            </a>
+        </div>
     </div>
-</div>
+</section>
+
+<!-- How It Works Section -->
+<section class="steps-section">
+    <div class="container">
+        <div class="section-title">
+            <h2>How Blood Link Works</h2>
+            <p>Simple steps to connect donors with those in urgent need</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-icon">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h3 class="step-title">Register Your Profile</h3>
+                    <p>Create your account with basic information and blood type. It takes less than 2 minutes.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-icon">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+                    <h3 class="step-title">Get Matching Requests</h3>
+                    <p>When there's a need in your area, we'll notify you about donation opportunities.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-icon">
+                        <i class="bi bi-hospital-fill"></i>
+                    </div>
+                    <h3 class="step-title">Donate & Save Lives</h3>
+                    <p>Visit the nearest blood bank or hospital to complete your life-saving donation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- User Types Section -->
+<section class="user-types">
+    <div class="container">
+        <div class="section-title">
+            <h2>For Both Donors & Doctors</h2>
+            <p>Blood Link serves two important roles in the life-saving process</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="user-card">
+                    <div class="user-header donor-header">
+                        <div class="user-icon">
+                            <i class="bi bi-droplet-fill"></i>
+                        </div>
+                        <h3>For Blood Donors</h3>
+                    </div>
+                    <div class="user-body">
+                        <div class="user-step">
+                            <div class="user-step-number">1</div>
+                            <div>Register with your personal details and blood type</div>
+                        </div>
+                        <div class="user-step">
+                            <div class="user-step-number">2</div>
+                            <div>Complete a simple health questionnaire</div>
+                        </div>
+                        <div class="user-step">
+                            <div class="user-step-number">3</div>
+                            <div>Set your availability for donations</div>
+                        </div>
+                        <div class="user-step">
+                            <div class="user-step-number">4</div>
+                            <div>Receive notifications when your blood type is needed</div>
+                        </div>
+                        <div class="user-step">
+                            <div class="user-step-number">5</div>
+                            <div>Donate at a convenient location and save lives</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="user-card">
+                    <div class="user-header doctor-header">
+                        <div class="user-icon">
+                            <i class="bi bi-person-badge-fill"></i>
+                        </div>
+                        <h3>For Healthcare Professionals</h3>
+                    </div>
+                    <div class="user-body">
+                        <div class="user-step doctor-step">
+                            <div class="user-step-number">1</div>
+                            <div>Register your hospital or medical facility</div>
+                        </div>
+                        <div class="user-step doctor-step">
+                            <div class="user-step-number">2</div>
+                            <div>Verify your medical credentials</div>
+                        </div>
+                        <div class="user-step doctor-step">
+                            <div class="user-step-number">3</div>
+                            <div>Search for donors by blood type and location</div>
+                        </div>
+                        <div class="user-step doctor-step">
+                            <div class="user-step-number">4</div>
+                            <div>Contact matched donors through our secure system</div>
+                        </div>
+                        <div class="user-step doctor-step">
+                            <div class="user-step-number">5</div>
+                            <div>Coordinate donations to save patients' lives</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">Donation Can Save</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Lives</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">56</div>
+                    <div class="stat-label">Days Between</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Steps To Donate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card">
+            <h2 class="cta-title">Ready to Make a Difference?</h2>
+            <p class="hero-lead">
+                Join Blood Link today and become part of a life-saving network. 
+                Whether you're a donor or healthcare professional, your participation saves lives.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="/donate" class="btn btn-donate">
+                    <i class="bi bi-droplet-fill me-2"></i> Register as Donor
+                </a>
+                <a href="/doctor/register" class="btn btn-doctor">
+                    <i class="bi bi-person-badge-fill me-2"></i> Register as Doctor
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
 
 <%- include('partials/_footer') %>
