@@ -13,11 +13,22 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="name" name="name" value="<%= typeof name != 'undefined' ? name : '' %>" required>
+                <!-- Added minlength, maxlength, pattern for client-side hint -->
+                <input type="text" class="form-control" id="name" name="name"
+                       value="<%= typeof name != 'undefined' ? name : '' %>"
+                       required minlength="2" maxlength="100" pattern="[a-zA-Z\s.'-]+"
+                       title="Name can only contain letters, spaces, apostrophes, or hyphens."
+                       >
             </div>
             <div class="col-md-6 mb-3">
                 <label for="contact" class="form-label">Contact Number (10 digits, unique) <span class="text-danger">*</span></label>
-                <input type="tel" class="form-control" id="contact" name="contact" pattern="[0-9]{10}" value="<%= typeof contact != 'undefined' ? contact : '' %>" required>
+                <!-- Added pattern for exactly 10 digits -->
+                <input type="tel" class="form-control" id="contact" name="contact"
+                       pattern="[0-9]{10}"
+                       value="<%= typeof contact != 'undefined' ? contact : '' %>"
+                       required maxlength="10" minlength="10"
+                       title="Contact number must be exactly 10 digits."
+                       >
                 <small class="form-text text-muted">This number will be used to contact you for verification.</small>
             </div>
         </div>
@@ -34,7 +45,12 @@
             </div>
             <div class="col-md-6 mb-3">
                 <label for="city" class="form-label">City (e.g., Mumbai) <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="city" name="city" value="<%= typeof city != 'undefined' ? city : '' %>" required>
+                <!-- Added minlength, maxlength, pattern for client-side hint -->
+                <input type="text" class="form-control" id="city" name="city"
+                       value="<%= typeof city != 'undefined' ? city : '' %>"
+                       required minlength="2" maxlength="50" pattern="[a-zA-Z\s.'-]+"
+                       title="City name can only contain letters, spaces, apostrophes, or hyphens."
+                       >
             </div>
         </div>
 
@@ -58,13 +74,18 @@
 
         <div class="mb-3">
             <label for="habits" class="form-label">General Health / Lifestyle Notes (Optional)</label>
-            <textarea class="form-control" id="habits" name="habits" rows="3" placeholder="e.g., Daily exercise, vegetarian diet, no smoking etc."><%= typeof habits != 'undefined' ? habits : '' %></textarea>
+            <!-- Added maxlength for client-side hint -->
+            <textarea class="form-control" id="habits" name="habits" rows="3"
+                      placeholder="e.g., Daily exercise, vegetarian diet, no smoking etc."
+                      maxlength="500"
+                      ><%= typeof habits != 'undefined' ? habits : '' %></textarea>
         </div>
 
         <hr class="my-4">
         <h3 class="mb-3">Pre-Screening Declarations <span class="text-danger">*</span></h3>
         <p class="text-muted">Please read and confirm each statement truthfully. All confirmations are required to proceed. Your answers will be verified by medical staff.</p>
 
+        <!-- Checkboxes remain REQUIRED for server-side validation -->
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="hasCompletedForm" name="hasCompletedForm" <%= (typeof hasCompletedForm != 'undefined' && hasCompletedForm) ? 'checked' : '' %> required>
             <label class="form-check-label" for="hasCompletedForm">1. I confirm I understand that this is a pre-registration and consent for blood donation.</label>
