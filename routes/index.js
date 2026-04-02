@@ -9,4 +9,7 @@ router.get('/', (req, res) => res.render('index', { title: 'Home' }));
 router.get('/donate', donorController.getDonatePage);
 router.post('/donate', donorController.registerDonor);
 
+// Check Donor Status
+router.post('/check-status', donorController.checkDonorStatus);
+
 module.exports = router;

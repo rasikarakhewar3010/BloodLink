@@ -9,11 +9,14 @@ router.get('/login', adminController.getAdminLoginPage);
 // Handle Admin Login
 router.post('/login', adminController.postAdminLogin);
 
-// Create Doctor Page (Protected by admin authentication)
-router.get('/create-doctor', ensureAdminAuthenticated, adminController.getCreateDoctorPage);
+// Admin Dashboard (View & Create Doctors)
+router.get('/dashboard', ensureAdminAuthenticated, adminController.getAdminDashboard);
 
 // Handle Doctor Creation (Protected by admin authentication)
 router.post('/create-doctor', ensureAdminAuthenticated, adminController.createDoctor);
+
+// Delete Doctor Route
+router.post('/delete-doctor/:id', ensureAdminAuthenticated, adminController.deleteDoctor);
 
 // Admin Logout
 router.get('/logout', adminController.adminLogout);

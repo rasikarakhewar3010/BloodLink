@@ -375,6 +375,57 @@
                     <h3 class="step-title">Save Lives</h3>
                     <p>When your blood type is needed, doctors will contact you directly through our secure system.</p>
                 </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Track Donor Status Section -->
+<section class="steps-section" id="track-status" style="background-color: var(--pale-blue);">
+    <div class="container">
+        <div class="section-title">
+            <h2>Track Your Donor Status</h2>
+            <p>Already registered? Enter your 10-digit mobile number to check your verification and availability.</p>
+        </div>
+        <div class="row justify-content-center fade-in">
+            <div class="col-md-7">
+                <div class="card shadow-md border-0" style="border-radius: 20px;">
+                    <div class="card-body p-4 p-md-5 text-center">
+                        <form action="/check-status#track-status" method="POST">
+                            <div class="input-group mb-0 shadow-sm border rounded-pill overflow-hidden">
+                                <span class="input-group-text bg-white border-0 ps-4 text-primary"><i class="bi bi-telephone-fill"></i></span>
+                                <input type="text" class="form-control form-control-lg border-0 shadow-none px-3" name="contact" placeholder="9876543210" required pattern="\d{10}">
+                                <button class="btn btn-primary px-4 fw-bold" type="submit" style="border-radius: 0 50px 50px 0;">Track Status</button>
+                            </div>
+                        </form>
+                        
+                        <% if (typeof statusResult !== 'undefined' && statusResult) { %>
+                            <div class="alert alert-<%= statusResult.isVerified ? 'success' : 'warning' %> mt-4 mb-0 text-start" style="border-radius: 15px;">
+                                <h5 class="alert-heading mb-3"><i class="bi bi-person-badge me-2"></i><strong><%= statusResult.name %></strong></h5>
+                                <div class="row g-2">
+                                    <div class="col-6"><strong><i class="bi bi-droplet-half text-danger"></i> Blood Group:</strong> <span class="badge bg-danger"><%= statusResult.bloodGroup %></span></div>
+                                    <div class="col-6"><strong><i class="bi bi-geo-alt-fill text-secondary"></i> City:</strong> <%= statusResult.city %></div>
+                                    <div class="col-12 mt-2">
+                                        <strong>Status:</strong> 
+                                        <% if(statusResult.isVerified){ %>
+                                            <span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> Medically Verified</span>
+                                        <% } else { %>
+                                            <span class="text-warning fw-bold text-dark"><i class="bi bi-hourglass-split"></i> Awaiting Verification Call</span>
+                                        <% } %>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>Availability:</strong> <span class="badge bg-secondary text-capitalize"><%= statusResult.currentAvailabilityStatus.replace(/_/g, ' ') %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } else if (typeof statusError !== 'undefined' && statusError) { %>
+                            <div class="alert alert-danger mt-4 mb-0 text-start" style="border-radius: 15px;">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= statusError %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -491,8 +542,8 @@
                 <a href="/donate" class="btn btn-donate">
                     <i class="bi bi-droplet-fill me-2"></i> Register as Donor
                 </a>
-                <a href="/doctor/register" class="btn btn-doctor">
-                    <i class="bi bi-person-badge-fill me-2"></i> Doctor Registration
+                <a href="/doctor/login" class="btn btn-doctor">
+                    <i class="bi bi-person-badge-fill me-2"></i> Doctor Login
                 </a>
             </div>
         </div>

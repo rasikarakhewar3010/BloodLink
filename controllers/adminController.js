@@ -1,30 +1,59 @@
 const bcrypt = require('bcryptjs');
-const Doctor = require('../models/Doctor');
+const supabase = require('../config/supabase');
 
 // Show Admin Login Page
 exports.getAdminLoginPage = (req, res) => {
   res.render('admin/login', { title: 'Admin Login' });
 };
 
-// Handle Admin Login (simple password check)
-exports.postAdminLogin = (req, res) => {
+// Handle Admin Login (bcrypt check against environment variable)
+exports.postAdminLogin = async (req, res) => {
   const { password } = req.body;
-  if (password === process.env.ADMIN_PASSWORD) {
-    req.session.isAdmin = true; // Set a session flag for admin access
+  
+  const envPassword = process.env.ADMIN_PASSWORD;
+  const envPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+
+  let isMatch = false;
+
+  if (envPasswordHash) {
+    isMatch = await bcrypt.compare(password, envPasswordHash);
+  } else if (envPassword) {
+    isMatch = password === envPassword;
+  }
+
+  if (isMatch) {
+    req.session.isAdmin = true; 
     req.flash('success_msg', 'Admin logged in.');
-    res.redirect('/admin/create-doctor');
+    res.redirect('/admin/dashboard');
   } else {
     req.flash('error_msg', 'Incorrect Admin Password.');
     res.redirect('/admin/login');
   }
 };
 
-// Show Create Doctor Page
-exports.getCreateDoctorPage = (req, res) => {
-  res.render('admin/create_doctor', { title: 'Create Doctor Account', errors: [] });
+// Show Admin Dashboard (List existing doctors & provide creation form)
+exports.getAdminDashboard = async (req, res) => {
+  try {
+    const { data: doctors, error } = await supabase
+      .from('doctors')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.render('admin/dashboard', { 
+      title: 'Admin Dashboard', 
+      doctors: doctors,
+      errors: [] 
+    });
+  } catch (err) {
+    console.error("Error fetching doctors for admin:", err);
+    req.flash('error_msg', 'Unable to fetch doctors list.');
+    res.render('admin/dashboard', { title: 'Admin Dashboard', doctors: [], errors: [] });
+  }
 };
 
-// Handle Doctor Creation
+// Handle Doctor Creation via Supabase Admin Auth
 exports.createDoctor = async (req, res) => {
   const { username, password, password2, city } = req.body;
   let errors = [];
@@ -32,52 +61,86 @@ exports.createDoctor = async (req, res) => {
   if (!username || !password || !password2 || !city) {
     errors.push({ msg: 'Please enter all fields.' });
   }
-
   if (password !== password2) {
     errors.push({ msg: 'Passwords do not match.' });
   }
-
   if (password.length < 6) {
     errors.push({ msg: 'Password must be at least 6 characters.' });
   }
 
+  const generatedEmail = `${username.replace(/\s+/g, '').toLowerCase()}@bloodlink.app`;
+
   if (errors.length > 0) {
-    res.render('admin/create_doctor', {
-      title: 'Create Doctor Account',
+    const { data: doctors } = await supabase.from('doctors').select('*').order('created_at', { ascending: false });
+    return res.render('admin/dashboard', {
+      title: 'Admin Dashboard',
+      doctors: doctors || [],
       errors,
       username, password, password2, city
     });
   } else {
     try {
-      const doctor = await Doctor.findOne({ username: username });
-      if (doctor) {
+      // 1. Check if profile already exists in doctors table
+      const { data: existingDoctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('username', username)
+        .single();
+        
+      if (existingDoctor) {
         errors.push({ msg: 'Username already exists.' });
-        return res.render('admin/create_doctor', {
-          title: 'Create Doctor Account',
+        const { data: doctors } = await supabase.from('doctors').select('*').order('created_at', { ascending: false });
+        return res.render('admin/dashboard', {
+          title: 'Admin Dashboard',
+          doctors: doctors || [],
           errors,
           username, password, password2, city
         });
       }
 
-      const newDoctor = new Doctor({
-        username,
-        password, // Mongoose pre-save hook will hash this
-        city
+      // 2. Create the Auth User
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: generatedEmail,
+        password: password,
+        email_confirm: true // bypass email confirmation 
       });
 
-      await newDoctor.save();
-      req.flash('success_msg', 'Doctor account created successfully.');
-      res.redirect('/admin/create-doctor');
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+            errors.push({ msg: 'User email generated already exists. Please choose a different username.' });
+        } else {
+            errors.push({ msg: authError.message });
+        }
+        const { data: doctors } = await supabase.from('doctors').select('*').order('created_at', { ascending: false });
+        return res.render('admin/dashboard', {
+          title: 'Admin Dashboard',
+          doctors: doctors || [],
+          errors,
+          username, password, password2, city
+        });
+      }
+
+      // 3. Create the Doctor Profile
+      const { data: newDoctor, error: insertError } = await supabase
+        .from('doctors')
+        .insert([{
+          auth_user_id: authData.user.id,
+          username: username,
+          city: city
+        }]);
+
+      if (insertError) throw insertError;
+
+      req.flash('success_msg', `Doctor account for ${username} created successfully.`);
+      res.redirect('/admin/dashboard');
+      
     } catch (err) {
       console.error(err);
-      if (err.name === 'ValidationError') {
-        for (let field in err.errors) {
-          errors.push({ msg: err.errors[field].message });
-        }
-      }
-      errors.push({ msg: 'Error creating doctor account.' });
-      res.render('admin/create_doctor', {
-        title: 'Create Doctor Account',
+      errors.push({ msg: 'Error creating doctor account. Check logs.' });
+      const { data: doctors } = await supabase.from('doctors').select('*').order('created_at', { ascending: false });
+      res.render('admin/dashboard', {
+        title: 'Admin Dashboard',
+        doctors: doctors || [],
         errors,
         username, password, password2, city
       });
@@ -85,23 +148,47 @@ exports.createDoctor = async (req, res) => {
   }
 };
 
-exports.adminLogout = (req, res, next) => {
-    // 1. Set the flash message FIRST. This stores it in the session before it's destroyed.
-    req.flash('success_msg', 'Admin logged out.');
+// Handle Doctor Deletion
+exports.deleteDoctor = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Fetch the doctor to get the auth_user_id
+        const { data: doctor, error: fetchErr } = await supabase
+            .from('doctors')
+            .select('auth_user_id, username')
+            .eq('id', id)
+            .single();
 
-    // 2. Destroy the session.
+        if (fetchErr || !doctor) {
+            req.flash('error_msg', 'Doctor not found.');
+            return res.redirect('/admin/dashboard');
+        }
+
+        // Delete from Supabase Auth explicitly using Admin API
+        const { error: authDeleteErr } = await supabase.auth.admin.deleteUser(doctor.auth_user_id);
+        
+        if (authDeleteErr) throw authDeleteErr;
+
+        // Note: The ON DELETE CASCADE on auth_user_id foreign key handles deleting the profile row in `doctors` table cleanly.
+        
+        req.flash('success_msg', `Doctor ${doctor.username} has been successfully deleted.`);
+        res.redirect('/admin/dashboard');
+        
+    } catch (err) {
+        console.error("Error deleting doctor:", err);
+        req.flash('error_msg', 'Failed to delete the doctor. Ensure they do not have dependent data violating constraints.');
+        res.redirect('/admin/dashboard');
+    }
+};
+
+exports.adminLogout = (req, res) => {
+    req.flash('success_msg', 'Admin logged out.');
     req.session.destroy(err => {
         if (err) {
             console.error('Error destroying admin session:', err);
-            // This flash message is a fallback if destroy itself fails.
-            req.flash('error_msg', 'There was an issue logging out. Please try again.');
-            return res.redirect('/admin/create-doctor'); // Fallback if destroy fails
+            return res.redirect('/admin/dashboard'); 
         }
-        // 3. Clear the session cookie explicitly. This ensures the browser's cookie is removed.
-        // 'connect.sid' is the default cookie name for express-session.
         res.clearCookie('connect.sid');
-
-        // 4. Redirect to the admin login page. The flash message will be available on the next request.
-        res.redirect('/admin/login');
+        res.redirect('/');
     });
 };
